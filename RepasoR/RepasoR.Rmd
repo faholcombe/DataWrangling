@@ -1,0 +1,89 @@
+---
+title: "Repaso"
+author: "Fausto Holcombe 20170476"
+date: "July 24, 2019"
+output: html_document
+---
+## Instalar Librerias
+
+```{r, cache = TRUE, echo = FALSE}
+install.packages("dplyr")
+install.packages("RMySQL")
+install.packages("lubridate")
+install.packages("openxlsx")
+install.packages("tidyverse")
+install.packages("stringr")
+install.packages("readr")
+install.packages("DBI")
+```
+## Cargando Librerias
+```{r, echo = FALSE}
+require(dplyr)
+```
+## Tipos de datos
+```{r}
+string <- "This is a string"
+string
+class(string)
+nchar(string)
+length(string)
+```
+```{r}
+number <- 234L
+class(number)
+typeof(number)
+```
+```{r}
+logical <- FALSE
+logical
+logical*1
+```
+```{r}
+factor_1 <- c("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun", "Wed", "Thu", "Wed", "Thu")
+factor_1 <- factor(factor_1)
+factor_1
+as.numeric(factor_1)
+```
+```{r}
+factor_2 <- c("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun", "Wed", "Thu", "Wed", "Thu")
+factor_2 <- ordered(factor_2, levels = c("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"))
+factor_2
+```
+## Vectors
+```{r}
+sample(x = 1:100, size = 8, replace = FALSE)
+sample(x = 1:100, size = 8, replace = TRUE)
+class(sample(x = 1:100, size = 8, replace = TRUE))
+vector_1 <- c(1:5, "A")
+vector_1
+vector_log <- c(1,0,0,1,0,1)
+vector_log<- as.logical(vector_log)
+vector_log
+```
+## List
+```{r}
+list_1 <- list(c(1:5),as.logical(c(1,0,1)),c("a", "b", "c"))
+names(list_1) <- c("first", "second","third")
+list_1
+list_1$second[2]
+list_1[[2]][2]
+```
+## Matrices
+```{r, casche = TRUE}
+matrix(data = 1, nrow = 4, ncol = 5)
+```
+## Data Frames
+```{r}
+df <- data.frame(col1 = c("This","is","a","vector","of","strings"), col2 = 1:6, col3 = letters[1:6], stringsAsFactors = FALSE)
+nrow(df)
+ncol(df)
+str(df)
+```
+## Funciones Importantes (BaseR)
+```{r, cache = TRUE}
+#df$col4 <- 11:16
+new_elements <- c("new_string", 19, "z")
+df <- rbind(df, new_elements)
+is.na(df)
+```
+
