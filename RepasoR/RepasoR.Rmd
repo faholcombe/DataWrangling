@@ -2,7 +2,7 @@
 title: "Repaso"
 author: "Fausto Holcombe 20170476"
 date: "July 24, 2019"
-output: html_document
+output: rmarkdown::github_document
 ---
 ## Instalar Librerias
 

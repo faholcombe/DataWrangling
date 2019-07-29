@@ -1,0 +1,6 @@
+"0","quijote_count <- dplyr::count(quijote_words,words,sort = TRUE)
+"
+"2","Error in arrange_impl(.data, dots) : 
+  Evaluation error: `as_dictionary()` is defunct as of rlang 0.3.0.
+Please use `as_data_pronoun()` instead.
+"
