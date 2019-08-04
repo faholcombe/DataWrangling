@@ -33,7 +33,7 @@ tabla11 <- funcion_fecha('11-2018.xlsx')
 tablamaestra <- rbind(tabla1, tabla2, tabla3, tabla4, tabla5, tabla6, tabla7, tabla8, tabla9, tabla10, tabla11)
 ```
 ##Ejercicio 2
-```{r}
+```{r, cache = TRUE}
 moda <- function(x){
   mayor <- max(x)
   numeros <- 1:mayor
@@ -48,7 +48,7 @@ lista <- list(c(1,2,2,3,3),c(1,1,1,2,3),c(3,3,3,2,2,1))
 lapply(lista,moda)
 ```
 ##Ejercicio 3
-```{r}
+```{r, cache = TRUE}
 library(readr)
 archivo <- 'INE_PARQUE_VEHICULAR_080219.txt'
 parque <- readr::read_delim(archivo, delim = "|", )
