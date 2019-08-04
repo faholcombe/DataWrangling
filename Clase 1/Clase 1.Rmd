@@ -16,8 +16,7 @@ library(quanteda)
 ```{r, cache = TRUE}
 text_file <- 'data/data/quijote.txt'
 readLines(text_file, n = 10, encoding = "UTF-8", skipNul = TRUE)
-quijote_lines <- readLines(text_file)
-quijote_lines
+quijote_lines <- read_lines(text_file)
 ```
 
 ##Performance de funciones
@@ -30,15 +29,23 @@ system.time(readLines(text_file))
 substr("1234567",1,3)
 ```
 ##Tokenizar
-```{r}
-quijote_frame <- dplyr::data_frame(txt=quijote_lines)
+```{r, cache = TRUE}
+quijote_frame <- data_frame(txt=quijote_lines)
 head(quijote_frame)
 quijote_words <- tidytext::unnest_tokens(quijote_frame, input = txt, output = words, token = "words")
-head(quijote_words)
 quijote_count <- dplyr::count(quijote_words,words,sort = TRUE)
 spanish_stopwords <- data_frame(words = quanteda::stopwords(language = "es"))
-view(spanish_stopwords)
-quijote_words_clean <- dply::anti_join(quijote_words, spanish_stopwords)
+quijote_words_clean <- dplyr::anti_join(quijote_words, spanish_stopwords)
 quijote_clean_count <- count(quijote_words_clean, words, sort = TRUE)
+quijote_clean_count
+```
+##Paquetes para leer excel
+```{r, cache = TRUE}
+library(readxl)
+```
+
+```{r}
+bancos_activos <- read_excel("data/data/bancos.xlsx", sheet = 2)
+head(bancos_activos)
 ```
 

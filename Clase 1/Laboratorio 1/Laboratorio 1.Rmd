@@ -1,0 +1,56 @@
+---
+title: "Laboratorio#1"
+author: "Fausto Holcombe 20170476"
+date: "7/31/2019"
+output: rmarkdown::github_document
+---
+##Ejercicio 1
+```{r, cache = TRUE}
+library(dplyr)
+library(readxl)
+library(readr)
+funcion_fecha <- function(x){
+  tabla <- read_excel(x)
+  columnas <- c("COD_VIAJE", "CLIENTE", "UBICACION", "CANTIDAD", "PILOTO", "Q", "CREDITO", "UNIDAD")
+  tabla <- tabla[,columnas]
+  mesanio <- substr(x,15,21)
+  tabla$fecha <- mesanio
+  return(tabla)
+}
+
+tabla1 <- funcion_fecha('01-2018.xlsx')
+tabla2 <- funcion_fecha('02-2018.xlsx')
+tabla3 <- funcion_fecha('03-2018.xlsx')
+tabla4 <- funcion_fecha('04-2018.xlsx')
+tabla5 <- funcion_fecha('05-2018.xlsx')
+tabla6 <- funcion_fecha('06-2018.xlsx')
+tabla7 <- funcion_fecha('07-2018.xlsx')
+tabla8 <- funcion_fecha('08-2018.xlsx')
+tabla9 <- funcion_fecha('09-2018.xlsx')
+tabla10 <- funcion_fecha('10-2018.xlsx')
+tabla11 <- funcion_fecha('11-2018.xlsx')
+
+tablamaestra <- rbind(tabla1, tabla2, tabla3, tabla4, tabla5, tabla6, tabla7, tabla8, tabla9, tabla10, tabla11)
+```
+##Ejercicio 2
+```{r}
+moda <- function(x){
+  mayor <- max(x)
+  numeros <- 1:mayor
+  conteo <- tabulate(x)
+  validos <- conteo == max(conteo)
+  resultado <- (numeros*validos)
+  return(resultado[resultado!=0])
+}
+
+lista <- list(c(1,2,2,3,3),c(1,1,1,2,3),c(3,3,3,2,2,1))
+
+lapply(lista,moda)
+```
+##Ejercicio 3
+```{r}
+library(readr)
+archivo <- 'INE_PARQUE_VEHICULAR_080219.txt'
+parque <- readr::read_delim(archivo, delim = "|", )
+```
+
