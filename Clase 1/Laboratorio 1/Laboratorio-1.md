@@ -113,3 +113,19 @@ parque <- readr::read_delim(archivo, delim = "|", )
     ##   5  -- 11 columns 10 columns 'INE_PARQUE_VEHICULAR_080219.txt'
     ## ... ... .......... .......... .................................
     ## See problems(...) for more details.
+
+``` r
+head(parque)
+```
+
+    ## # A tibble: 6 x 11
+    ##   ANIO_ALZA MES   NOMBRE_DEPARTAM~ NOMBRE_MUNICIPIO MODELO_VEHICULO
+    ##       <dbl> <chr> <chr>            <chr>            <chr>          
+    ## 1      2007 05    HUEHUETENANGO    HUEHUETENANGO    2007           
+    ## 2      2007 05    EL PROGRESO      EL JICARO        2007           
+    ## 3      2007 05    SAN MARCOS       OCOS             2007           
+    ## 4      2007 05    ESCUINTLA        "SAN JOS\xc9"    2006           
+    ## 5      2007 05    JUTIAPA          MOYUTA           2007           
+    ## 6      2007 05    GUATEMALA        FRAIJANES        1997           
+    ## # ... with 6 more variables: LINEA_VEHICULO <chr>, TIPO_VEHICULO <chr>,
+    ## #   USO_VEHICULO <chr>, MARCA_VEHICULO <chr>, CANTIDAD <dbl>, X11 <chr>

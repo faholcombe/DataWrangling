@@ -52,5 +52,6 @@ lapply(lista,moda)
 library(readr)
 archivo <- 'INE_PARQUE_VEHICULAR_080219.txt'
 parque <- readr::read_delim(archivo, delim = "|", )
+head(parque)
 ```
 
