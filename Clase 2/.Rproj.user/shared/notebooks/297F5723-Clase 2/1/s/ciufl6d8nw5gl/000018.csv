@@ -1,0 +1,6 @@
+"0","dbWriteTable(mydb, ""test20170476"", test, test3, row.names = FALSE, append = TRUE)
+"
+"1","[1]"
+"1"," TRUE"
+"1","
+"

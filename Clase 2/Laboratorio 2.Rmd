@@ -1,0 +1,50 @@
+---
+title: "Laboratorio 2"
+author: "Fausto Holcombe 20170476"
+date: "8/7/2019"
+output: rmarkdown::github_document
+---
+
+```{r setup, cache = TRUE, echo = FALSE}
+#install.packages("RMySQL")
+require(RMySQL)
+connection_name <- "datawrangling.co4pgsadnasr.us-east-2.rds.amazonaws.com"
+db_name <- "dataWrangling"
+user <- "dstrack"
+password <- "datawrangling2019"
+drv = dbDriver("MySQL")
+mydb = dbConnect(drv,host=connection_name,dbname=db_name,user=user,pass=password)
+```
+
+```{r,cache = TRUE}
+dbListTables(mydb)
+dbListFields(mydb, "heroes_information")
+dbGetQuery(mydb, "SELECT * FROM heroes_information")
+#Ejercicio 1
+dbGetQuery(mydb, "SELECT name, Publisher FROM heroes_information")
+#Ejercicio 2
+dbGetQuery(mydb, "SELECT DISTINCT Publisher FROM heroes_information")
+#Ejercicio 3
+dbGetQuery(mydb, "SELECT COUNT(DISTINCT Publisher)  FROM heroes_information")
+#Ejercicio 4
+dbGetQuery(mydb, "SELECT * FROM heroes_information WHERE Height > 200")
+#Ejercicio 5
+dbGetQuery(mydb, "SELECT * FROM heroes_information WHERE Race = 'Human';")
+#Ejercicio 6
+dbGetQuery(mydb, "SELECT * FROM heroes_information WHERE Height > 200 AND Race = 'Human';")
+#Ejercicio 7
+dbGetQuery(mydb, "SELECT COUNT (*) FROM heroes_information WHERE [heroes_information].[Eye color] = 'red' OR [heroes_information].[Eye color] = 'blue';")
+#Ejercicio 8
+dbGetQuery(mydb, "SELECT * FROM heroes_information WHERE Height > 200 AND Race = 'Human';")
+#Ejercicio 9
+dbGetQuery(mydb, "SELECT COUNT * FROM heroes_information WHERE Weight BETWEEN 100 AND 200;")
+#Ejercicio 10
+dbGetQuery(mydb, "SELECT name, weight, height FROM heroes_information WHERE Weight > 200 AND height > 100 ORDER BY height DESC;")
+dbGetQuery(mydb, "SELECT name, race FROM heroes_information order by name, race;")
+#Ejercicio 11
+dbGetQuery(mydb, "SELECT Publisher, Gender, COUNT(*) FROM heroes_information WHERE Gender = 'Female' GROUP BY Publisher ORDER BY 3 desc;")
+#Ejercicio 12
+dbGetQuery(mydb, "SELECT Publisher, alignment, race, COUNT(*) FROM heroes_information WHERE alignment = 'Good' GROUP BY Publisher HAVING COUNT(*) > 30;")
+
+```
+

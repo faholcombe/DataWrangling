@@ -1,0 +1,43 @@
+---
+title: "Clase 2"
+author: "Fausto Holcombe 20170476"
+date: "8/5/2019"
+output: rmarkdown::github_document
+---
+```{r, cache = TRUE}
+#install.packages("RMySQL")
+require(RMySQL)
+connection_name <- "datawrangling.co4pgsadnasr.us-east-2.rds.amazonaws.com"
+db_name <- "dataWrangling"
+user <- "dstrack"
+password <- "datawrangling2019"
+drv = dbDriver("MySQL")
+mydb = dbConnect(drv,host=connection_name,dbname=db_name,user=user,pass=password)
+summary(mydb)
+dbListTables(mydb)
+dbListFields(mydb,"heroes_information")
+```
+#Como son esas columnas
+```{r}
+dbColumnInfo(mydb,"heroes_information")
+hero <- dbReadTable(mydb, "heroes_information")
+hero <- dbGetQuery(mydb, "SELECT * FROM heroes_information")
+head(hero)
+query <- "SELECT * FROM heroes_information"
+Query <- dbGetQuery(mydb, query)
+hero <- dbFetch(Query, n = 10)
+dbGetInfo(Query)
+dbGetRowCount(Query)
+x <- 1:10
+y <- letters[1:10]
+test <- data.frame(x, y, stringsAsFactors = FALSE)
+dbWriteTable(mydb, "test20170476",test,row.names = FALSE)
+x <- sample(100,10)
+y <- letters[11:20]
+test2 <- data.frame(x, y, stringsAsFactors = FALSE)
+dbWriteTable(mydb, "test20170476",test2,row.names = FALSE, overwrite = TRUE)
+x <- sample(100,10)
+y <- letters [6:15]
+test3 <- data.frame(x,y,stringsAsFactors = FALSE)
+dbWriteTable(mydb, "test20170476", test, test3, row.names = FALSE, append = TRUE)
+```
