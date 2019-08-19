@@ -1,0 +1,129 @@
+---
+title: "Laboratorio 3"
+output: rmarkdown::github_document
+---
+
+```{r, cache = TRUE, echo = FALSE}
+require(dplyr)
+require(tidyverse)
+require(readr)
+require(ggplot2)
+data_distribuidor <- read_csv('tabla_completa.csv', locale = readr::locale(encoding = "latin1"))
+var_fac <- c("CREDITO","UNIDAD")
+data_distribuidor[var_fac] <- lapply(data_distribuidor[var_fac], as.factor)
+```
+##¿Debemos invertir en la contratación de mas personal?
+```{r,cache = TRUE}
+numero_pilotos <- n_distinct(data_distribuidor$PILOTO)
+data_personal <- data_distribuidor %>% 
+  select(MES) %>% 
+  group_by(MES) %>% 
+  summarise(viajes_promedio = n()/numero_pilotos)
+data_personal
+```
+##¿Debemos invertir en la compra de mas vehiculos de distribución?¿Cuantos y de que tipo?
+```{r, cache = TRUE}
+filter(data_distribuidor, UNIDAD == 'Camion Grande' & CANTIDAD < 1000)
+filter(data_distribuidor, UNIDAD == 'Camion Pequeño' & (CANTIDAD > 1000 | CANTIDAD < 500))
+filter(data_distribuidor, UNIDAD == 'Panel' & CANTIDAD > 500)
+data_unidades <- left_join(data_distribuidor %>%
+  select(UNIDAD,MES) %>% 
+  group_by(UNIDAD,MES) %>% 
+  summarise(viajes_unidades = n()), data_distribuidor%>%
+  select(MES) %>% 
+  group_by(MES) %>% 
+  summarise(viajes_totales = n()), by = c("MES"="MES"))
+data_unidades$porcentaje_viajes <- data_unidades$viajes_unidades/data_unidades$viajes_totales * 100
+data_unidades %>% 
+  group_by(UNIDAD) %>% 
+  summarise(porcentaje_promedio_uso = mean(porcentaje_viajes))
+```
+##¿Las tarifas actuales son aceptables por el cliente?
+```{r, cache = TRUE}
+data_limpia <- data_distribuidor
+data_limpia$CLIENTE <- gsub("/ Despacho a cliente","",data_limpia$CLIENTE, fixed = TRUE)
+data_limpia$CLIENTE <- gsub("|||Faltante","",data_limpia$CLIENTE, fixed = TRUE)
+data_limpia$CLIENTE <- gsub("|||DEVOLUCION","",data_limpia$CLIENTE, fixed = TRUE)
+data_limpia$CLIENTE <- gsub("|||FALTANTE","",data_limpia$CLIENTE, fixed = TRUE)
+data_limpia$CLIENTE <- gsub("/Despacho a cliente","",data_limpia$CLIENTE, fixed = TRUE)
+data_limpia$CLIENTE <- gsub("/Despachoacliente","",data_limpia$CLIENTE, fixed = TRUE)
+data_limpia$CLIENTE <- gsub(" |||","",data_limpia$CLIENTE)
+data_limpia$CLIENTE <- sub("|||","",data_limpia$CLIENTE, fixed = TRUE)
+data_limpia1 <- data_limpia
+data_limpia <- left_join(data_limpia %>% 
+  select(MES,Q) %>% 
+  group_by(MES) %>% 
+  summarise(ingresos = sum(Q)),data_limpia %>% 
+  select(MES,CLIENTE) %>% 
+  group_by(MES) %>% 
+  summarise(clientes_unicos = n_distinct(CLIENTE)), by = c("MES"="MES"))
+data_limpia
+```
+##¿Nos estan robando?
+```{r, cache = TRUE}
+filas_faltante <- grep("FALTANTE", data_distribuidor$CLIENTE, ignore.case = TRUE)
+data_pilotos <- left_join(data_distribuidor[filas_faltante,] %>%
+  select(PILOTO,MES) %>% 
+  group_by(PILOTO,MES) %>% 
+  summarise(viajes_faltantes = n()), data_distribuidor%>%
+  select(PILOTO,MES) %>% 
+  group_by(PILOTO,MES) %>% 
+  summarise(viajes_totales = n()), by = c("PILOTO"="PILOTO", "MES"="MES"))
+data_pilotos$porcentajes_faltantes <- data_pilotos$viajes_faltantes/data_pilotos$viajes_totales
+data_pilotos %>% 
+  group_by(PILOTO) %>% 
+  summarise(promedio_faltantes_porcentaje = mean(porcentajes_faltantes)*100) %>% 
+  arrange(desc(promedio_faltantes_porcentaje))
+```
+##80-20 de clientes y cuáles de ellos son los más importantes
+```{r, cache = TRUE}
+data_grafica <- left_join(data_limpia1 %>%
+  select(MES,CLIENTE,Q) %>% 
+  group_by(MES,CLIENTE) %>% 
+  summarise(ingresos = sum(Q)) %>%
+  arrange(MES,desc(ingresos)),
+  data_limpia1 %>% 
+    select(MES,Q) %>% 
+    group_by(MES) %>% 
+    summarise(ingresos = sum(Q)), by = c("MES" = "MES")) %>% 
+  mutate(porcentaje_mensual = ingresos.x/ingresos.y)
+data_grafica$suma_acum <- ave(data_grafica$porcentaje_mensual,data_grafica$MES,FUN=cumsum)
+data_grafica$factor_agrup <- if_else(data_grafica$suma_acum < 0.8,1,0)
+data_grafica$factor_agrup <- if_else(data_grafica$factor_agrup == 1, data_grafica$CLIENTE, "OTRO")
+count(data_grafica,factor_agrup,sort=TRUE) %>% 
+  group_by(factor_agrup) %>% 
+  summarise(veces = sum(n)) %>% 
+  filter(factor_agrup != "OTRO") %>% 
+  arrange(desc(veces))
+for(j in unique(data_grafica$MES)){
+  graph8020 <- ggplot(data_grafica[data_grafica$MES == j,], 
+                  aes(x=MES,y=ingresos.x,fill=factor_agrup))+
+    geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0)
+    print(graph8020)}
+```
+#Mejores pilotos y transportes más efectivos
+```{r, cache = TRUE}
+left_join(data_distribuidor %>% 
+                               select(PILOTO,Q) %>% 
+                               group_by(PILOTO) %>% 
+                               summarise(ingresos = sum(Q)),
+          data_distribuidor %>%
+                               select(PILOTO) %>% 
+                               group_by(PILOTO) %>% 
+                               summarise(viajes_totales = n()), by = c("PILOTO" = "PILOTO")) %>% 
+  mutate(ingresosxviaje = ingresos/viajes_totales) %>% 
+  arrange(desc(ingresosxviaje)) %>% 
+  ggplot(aes(x=PILOTO,y=ingresosxviaje, fill = PILOTO))+geom_col()+theme(axis.text.x = element_text(angle = 90))+geom_text(aes(label = round(ingresosxviaje)), vjust = -0.5)
+left_join(data_distribuidor %>% 
+                               select(UNIDAD,Q) %>% 
+                               group_by(UNIDAD) %>% 
+                               summarise(ingresos = sum(Q)),
+          data_distribuidor %>%
+                               select(UNIDAD) %>% 
+                               group_by(UNIDAD) %>% 
+                               summarise(viajes_totales = n()), by = c("UNIDAD" = "UNIDAD")) %>% 
+  mutate(ingresosxviaje = ingresos/viajes_totales) %>% 
+  arrange(desc(ingresosxviaje)) %>% 
+  ggplot(aes(x=UNIDAD,y=ingresosxviaje, fill = UNIDAD))+geom_col()+theme(axis.text.x = element_text(angle = 90))+geom_text(aes(label = round(ingresosxviaje)), vjust = -0.5)
+```
+

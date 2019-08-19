@@ -1,0 +1,35 @@
+---
+title: "R Notebook"
+output: rmarkdown::github_document
+---
+```{r}
+library(tidyverse)
+library(readr)
+players_score <- read_csv(file = "Players_Score.csv")
+head(players_score)
+players_score$cambio <- str_extract_all(players_score$Apps, "\\([^)]*\\)","")
+players_score$cambio <- str_extract_all(players_score$cambio,"[0-9]+")
+players_score$Apps <- str_replace_all(players_score$Apps, "\\([^)]*\\)","")
+numbers <- c("age", "Apps", "cambio", "Goals", "Assists", "Yel", "Red", "SpG", "PS", "AerialsWon", "MotM", "Rating")
+players_score[numbers] <- lapply(players_score[numbers],as.numeric)
+head(players_score)
+players_score[numbers] <- players_score[numbers] %>%
+  replace_na(list(age=0,Apps=0,cambio=0,Goals=0,Assists=0,Yel=0,Red=0,SpG=0,PS=0,AerialsWon=0,MotM=0,Rating=0))
+filter(players_score, club %in% c("Real Madrid","Barcelona"), age < 30)
+players_score %>%
+  filter(club=='Real Madrid')
+players_score %>% 
+  select(club,age) %>%
+  filter(club=='Real Madrid')
+players_score %>% 
+  filter(Goals < 0) %>% 
+  mutate(Goal_Rate = Mins/Goals) %>% 
+  arrange(desc(Goal_Rate)) %>% 
+  distinct()
+players_score %>% 
+  select(club,Goals) %>% 
+  group_by(club) %>% 
+  summarise(team_goals = sum(Goals)) %>% 
+  arrange(desc(team_goals))
+```
+
