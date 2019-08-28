@@ -1,0 +1,4 @@
+"0","df <- data.frame(row = LETTERS[1:3], a = 1:3, b = 4:6, c = 7:9)"
+"0","dfm <- melt(df, id = ""row"")"
+"0","dfg <- gather(df,key =""variable"",value = ""value"",a:c)"
+"0","dfg %>% View()"

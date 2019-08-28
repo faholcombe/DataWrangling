@@ -1,0 +1,4 @@
+"0","load('wide_religion.Rda')"
+"0","wide_religion %>%"
+"0","  gather(key = ""income_level"",value = ""frequency"",-religion) %>% "
+"0","  head()"
