@@ -1,0 +1,31 @@
+---
+title: "Clase 5"
+author: "Fausto Holcombe 20170476"
+date: "9/2/2019"
+output: html_document
+---
+#instalar lubridate
+```{r, cahce = TRUE}
+require(lubridate)
+require(nycflights13)
+require(dplyr)
+```         
+
+```{r, cache=TRUE}
+flights %>% 
+  select(year,month,day,hour,minute) %>%
+  mutate(departure = make_date(year = year, month = month, day = day)) %>%
+  group_by(day(departure)) %>% 
+  count()
+
+```
+
+```{r, cache = TRUE}
+date1 <- dmy('26-09-2019')
+date0 <- dmy('20-05-2019')
+begin <- c("May 11, 1996 12:05", "September 12, 2001 1:00","July 1, 1988 3:32") %>% 
+  mdy_hm(tz = "US/Pacific")
+end <- c("7/8/97 8:00","10/23/02 12:00","1/4/99 2:05") %>% 
+  mdy_hm(tz = "US/Pacific") 
+```
+

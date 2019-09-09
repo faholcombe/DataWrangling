@@ -1,0 +1,93 @@
+---
+title: "Laboratorio 5"
+author: "Fausto Holcombe 20170476"
+date: "9/6/2019"
+output: rmarkdown::github_document
+---
+
+```{r, cache = TRUE}
+require(dplyr)
+require(lubridate)
+require(readr)
+require(ggplot2)
+require(tidyverse)
+```
+# Ejercicio 1
+```{r, cache = TRUE}
+fecha_ecplise_inicial <- ymd_hms("2017/08/21 18:26:40", tz = "UTC")
+synodic_month <- duration("29d 12H 44M 3S")
+saros <- synodic_month*223
+paste("La fecha del siguiente eclipse solar es",fecha_ecplise_inicial+saros)
+```
+# Ejercicio 2-7
+```{r, cache = TRUE}
+datos <- read_csv('data.csv')
+
+datos$`Fecha Creación` <- dmy(datos$`Fecha Creación`)
+datos$`Fecha Final` <- dmy(datos$`Fecha Final`)
+datos$fechahora_creacion <- make_datetime(year = year(datos$`Fecha Creación`), month = month(datos$`Fecha Creación`), 
+                                    day = day(datos$`Fecha Creación`), hour = hour(datos$`Hora Creación`), 
+                                    min = minute(datos$`Hora Creación`), sec = second(datos$`Hora Creación`))
+datos$fechahora_final <- make_datetime(year = year(datos$`Fecha Final`), month = month(datos$`Fecha Final`), 
+                                    day = day(datos$`Fecha Final`), hour = hour(datos$`Hora Final`), 
+                                    min = minute(datos$`Hora Final`), sec = second(datos$`Hora Final`))
+datos$intervalo <- as.duration(datos$fechahora_creacion %--% datos$fechahora_final)
+datos$`Caller ID` <- as.factor(datos$`Caller ID`)
+datos$minutos <- as.numeric(datos$intervalo/60)
+#Ejercicio 2
+llamadas_mensuales_por_ID <- datos %>%
+  select(fechahora_creacion,`Caller ID`,Call) %>% 
+  filter(Call == 1) %>% 
+  group_by(month(fechahora_creacion, label = TRUE),`Caller ID`) %>%
+  summarise(cant_llamadas = n()) %>% 
+  rename(mes = "month(fechahora_creacion, label = TRUE)")
+#Ejercicio 3
+dias_semana <- datos %>% 
+  group_by(wday(fechahora_creacion, label = TRUE)) %>% 
+  summarise(items = n()) %>% 
+  order_by(desc(items))
+print(dias_semana)
+#Ejercicio 4
+items_por_mes <- datos %>%
+  group_by(month(fechahora_creacion, label = TRUE)) %>% 
+  summarise(items = n()) %>% 
+  order_by(desc(items))
+print(items_por_mes)
+#Ejercicio 5
+llamadas_mensuales <- datos %>%
+  select(fechahora_creacion,Call) %>% 
+  filter(Call == 1) %>% 
+  group_by(month(fechahora_creacion, label = TRUE)) %>% 
+  summarise(cant_llamadas = n()) %>% 
+  rename(mes = "month(fechahora_creacion, label = TRUE)")
+ggplot(data=llamadas_mensuales, aes(x=mes, y=cant_llamadas, group = 1)) +
+  geom_line()+
+  geom_point()
+llamadas_semanales <- datos %>%
+  select(fechahora_creacion,Call) %>% 
+  filter(Call == 1) %>% 
+  group_by(wday(fechahora_creacion, label = TRUE)) %>% 
+  summarise(cant_llamadas = n()) %>% 
+  rename(dia = "wday(fechahora_creacion, label = TRUE)")
+ggplot(data=llamadas_semanales, aes(x=dia, y=cant_llamadas, group = 1)) +
+  geom_line()+
+  geom_point()
+#Existen dos estacionalidades en las llamadas, como se puede ver en la primera grafica, los meses de Marzo, Abril y Diciembre tienen picos positivos mientras que febrero y septiembre tienen picos negativos. Ademas de esto, durante la semana se puede ver una clara estacionalidad, durante el principio de la semena, que llega a su cumulo el día miercoles y cae el dia jueves.
+#Ejercicio 6
+promedio_llamada_tiempo <- datos %>% 
+  select(Call,intervalo) %>% 
+  filter(Call == 1) %>% 
+  summarise(promedio = mean(intervalo))
+print(paste("El tiempo promedio por llamada en minutos es de",round(as.numeric(promedio_llamada_tiempo/60),2)))
+#Ejercicio 7
+datos$categoria_minutos <- 5*round(datos$minutos/5)
+datos_tabla <- datos %>% 
+  select(Call,categoria_minutos) %>% 
+  filter(Call == 1)
+tabla_frec <- as.data.frame(table(datos_tabla$categoria_minutos)) %>% 
+  rename(tiempo_de_llamada_en_minutos = Var1)
+print(tabla_frec)
+ggplot(data=tabla_frec, aes(x=tiempo_de_llamada_en_minutos, y = Freq)) + geom_bar(stat = 'identity')
+#Como se puede ver por la grafica, la mayoría de las llamadas duran más de 5 minutos y menos de 30 minutos, pero tambien existen errores en los registros, ejemplificados por los valores negativos.
+```
+
