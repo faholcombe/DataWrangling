@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1568057938863.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "346761253",
+    "id" : "E04FA05A",
+    "lastKnownWriteTime" : 1568060408,
+    "last_content_update" : 1568060410258,
+    "path" : "D:/UFM/Semestre VI/Data Wrangling/Clase 6/Clase 6.Rmd",
+    "project_path" : "Clase 6.Rmd",
+    "properties" : {
+        "cursorPosition" : "18,41",
+        "scrollLine" : "1",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}
