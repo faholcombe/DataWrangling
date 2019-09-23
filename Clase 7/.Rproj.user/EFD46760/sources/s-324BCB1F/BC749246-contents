@@ -1,0 +1,56 @@
+---
+title: "Laboratorio #7"
+output: github_document
+---
+#Bibliotecas
+```{r, cache = TRUE}
+require(dplyr)
+require(tidyverse)
+require(stringr)
+require(reshape2)
+```
+#Cargar datos
+```{r, cache = TRUE}
+data <- read_csv('c1.csv') %>% 
+  select(fecha = Fecha, ID, Camion = Camion_5,
+         Pickup, Moto, Cod, origen, Lat, Long, cos_var_camion = directoCamion_5, cos_var_pickup = directoPickup,cos_var_moto = directoMoto, cos_fijo_camion = fijoCamion_5, cos_fijo_pickup = fijoPickup, cos_fijo_moto = fijoMoto, height, `5-30`, `30-45`, `45-75`, `75-120`, `120+`)
+numcols <- c("Camion","Pickup","Moto","cos_var_camion","cos_var_pickup","cos_var_moto","cos_fijo_camion","cos_fijo_pickup","cos_fijo_moto")
+for(x in numcols){
+  data[x] <- substring(data[x],2)
+  data[data[x] == "-",x] <- 0
+  data[x] <- as.numeric(data[x])
+}
+#data$Pickup <- substring(data$Pickup,2)
+#data$Camion <- substring(data$Camion,2)
+#data$Moto <- substring(data$Moto,2)
+#data[data$Pickup == "-","Pickup"] <- 0
+#data[data$Camion == "-","Camion"] <- 0
+#data[data$Moto == "-","Moto"] <- 0
+#data$Pickup <- as.numeric(data$Pickup)
+#data$Moto <- as.numeric(data$Moto)
+#data$Camion <- as.numeric(data$Camion)
+```
+#Wrangling
+```{r, cache = TRUE}
+tidy_function_1 <- function(x){
+  if(x[3] > 0){
+    return("Camion")
+  } else if(x[4] > 0){
+    return("Pickup")
+  } else if(x[5] > 0){
+    return("Moto")
+  }
+}
+data$vehiculo <- apply(data,1,tidy_function_1)
+tidy_function_2 <- function(x){
+  if(x[22] == "Camion"){
+    return(as.numeric(x[3]))
+  } else if(x[22] == "Pickup"){
+    return(as.numeric(x[4]))
+  } else if(x[22] == "Moto"){
+    return(as.numeric(x[5]))
+  }
+}
+data$costo_total <- apply(data,1,tidy_function_2)
+```
+

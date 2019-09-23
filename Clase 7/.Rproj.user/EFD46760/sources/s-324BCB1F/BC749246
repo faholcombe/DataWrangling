@@ -1,0 +1,27 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1568858133599.000,
+    "dirty" : true,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "990172263",
+    "id" : "BC749246",
+    "lastKnownWriteTime" : 1568858440,
+    "last_content_update" : 1568867966804,
+    "path" : "D:/UFM/Semestre VI/Data Wrangling/Clase 7/Laboratorio_7.Rmd",
+    "project_path" : "Laboratorio_7.Rmd",
+    "properties" : {
+        "chunk_output_type" : "inline",
+        "cursorPosition" : "18,30",
+        "scrollLine" : "9",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

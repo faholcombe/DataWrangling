@@ -1,0 +1,9 @@
+"0","for(x in numcols){
+  data[,x] <- substring(data[,x],2)
+  data[data[,x] == ""-"",x] <- 0
+  data[,x] <- as.numeric(data[,x])
+}
+"
+"2","Error in as.numeric(data[, x]) : 
+  (list) object cannot be coerced to type 'double'
+"

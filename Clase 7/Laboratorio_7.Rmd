@@ -1,0 +1,196 @@
+---
+title: "Laboratorio #7"
+output: github_document
+---
+#Bibliotecas
+```{r, cache = TRUE}
+require(dplyr)
+require(tidyverse)
+require(stringr)
+require(reshape2)
+require(lubridate)
+require(ggplot2)
+```
+#Cargar datos
+```{r, cache = TRUE}
+data <- read_csv('c1.csv') %>%  select(Fecha, ID, camion = Camion_5,pickup = Pickup,moto = Moto, cod = Cod, origen, Lat, Long, factura,
+                                  variable_camion = directoCamion_5, variable_pickup = directoPickup, variable_moto = directoMoto,
+                                  fijo_camion = fijoCamion_5, fijo_pickup = fijoPickup, fijo_moto = fijoMoto, height, `5-30`,`30-45`,
+                                  `45-75`,`75-120`,`120+`)
+data$camion <- substring(data$camion,2)
+data$pickup <- substring(data$pickup,2)
+data$moto <- substring(data$moto,2)
+data$factura <- substring(data$factura,2)
+data$variable_camion <- substring(data$variable_camion,2)
+data$variable_moto <- substring(data$variable_moto,2)
+data$variable_pickup <- substring(data$variable_pickup,2)
+data$fijo_camion <- substring(data$fijo_camion,2)
+data$fijo_moto <- substring(data$fijo_moto,2)
+data$fijo_pickup <- substring(data$fijo_pickup,2)
+for(x in c("camion","moto","pickup","factura","variable_camion","variable_moto","variable_pickup","fijo_camion","fijo_moto","fijo_pickup")){
+  data[data[[x]] == "-",x] <- 0
+  data[x] <- as.numeric(data[[x]])
+}
+tidy_function_1 <- function(x){
+  if(x[3] > 0){
+      return(as.character("Camion"))
+  } else if(x[4] > 0){
+      return(as.character("Pickup"))
+  } else if(x[5] > 0){
+      return(as.character("Moto"))
+    }
+  }
+tidy_function_2 <- function(x){
+  if(x[3] > 0){
+      return(as.numeric(x[3]))
+  } else if(x[4] > 0){
+      return(as.numeric(x[4]))
+  } else if(x[5] > 0){
+      return(as.numeric(x[5]))
+    }
+  }
+data$vehiculo <- apply(data,1,tidy_function_1)
+data$vehiculo <- apply(data,1,tidy_function_1)
+data$costo_total <- apply(data,1,tidy_function_2)
+data$costo_total <- apply(data,1,tidy_function_2)
+tidy_function_3 <- function(x){
+  if(x[3] > 0){
+      return(as.numeric(x[11]))
+  } else if(x[4] > 0){
+      return(as.numeric(x[12]))
+  } else if(x[5] > 0){
+      return(as.numeric(x[13]))
+  }
+}
+tidy_function_4 <- function(x){
+  if(x[3] > 0){
+      return(as.numeric(x[14]))
+  } else if(x[4] > 0){
+      return(as.numeric(x[15]))
+  } else if(x[5] > 0){
+      return(as.numeric(x[16]))
+    }
+  }
+data$costo_variable <- apply(data,1,tidy_function_3)
+data$costo_variable <- apply(data,1,tidy_function_3)
+data$costo_fijo <- apply(data,1,tidy_function_4)
+data$costo_fijo <- apply(data,1,tidy_function_4)
+tidy_function_5 <- function(x){
+  if(!is.na(x[18] == "x")){
+    return("5-30")
+  } else if(!is.na(x[19] == "x")){
+    return("30-45")
+  } else if(!is.na(x[20] == "x")){
+    return("45-75")
+  } else if(!is.na(x[21] == "x")){
+    return("75-120")
+  } else if(!is.na(x[22] == "x")){
+    return("120+")
+  }
+}
+data$minutos <- apply(data,1,tidy_function_5)
+data$Fecha <- dmy(data$Fecha)
+data <- data %>% 
+  select(Fecha, ID,cod,vehiculo,minutos,factura,costo_total,costo_fijo,costo_variable, origen)
+data$ganancia <- data$factura - data$costo_total
+```
+#Obtener Estados de Resultados
+```{r, cache = TRUE}
+#estado_de_resultados
+ingresos_totales <- c()
+costos_totales <- c()
+for(x in c(unique(data$cod),"total")){
+  if(x != "total"){
+    ingresos <- sum(data[data$cod == x,"factura"])
+    ingresos_totales <- c(ingresos_totales, ingresos)
+    print(paste("Ingresos por",x,": Q.",format(ingresos, big.mark = ",", scientific = FALSE, trim = TRUE)))
+  } else if(x == "total"){
+    print("--------------------------------------------------------------------------------------------------------")
+    print(paste("Ingresos totales por servicios: Q.", format(sum(ingresos_totales),big.mark = ",", scientific = FALSE, trim = TRUE)))
+  }
+}
+for(x in c(unique(data$cod),"total")){
+  if(x != "total"){
+    costo_de_ventas <- sum(data[data$cod == x,"costo_variable"])
+    costos_totales <- c(costos_totales,costo_de_ventas)
+    print(paste("Costo de ventas por",x,": ( Q.",format(costo_de_ventas, big.mark = ",", scientific = FALSE, trim = TRUE),")"))
+  } else if(x == "total"){
+    print("--------------------------------------------------------------------------------------------------------")
+    print(paste("Utilidad bruta : Q.", format(sum(ingresos_totales - costos_totales), big.mark = ",", scientific = FALSE, trim = TRUE)))
+    print(paste("Costos fijos: -Q.", format(sum(data["costo_fijo"]), big.mark = ",", scientific = FALSE, trim = TRUE)))
+    print("--------------------------------------------------------------------------------------------------------")
+    print(paste("Utilidad antes de intereses, depreciaciones, amortizaciones e impuestos (EBIDTA): Q.", format(sum(ingresos_totales - costos_totales) - sum(data["costo_fijo"]), big.mark = ",", scientific = FALSE, trim = TRUE)))
+  }
+}
+```
+#Como quedo el tarifario 2017
+```{r, cache = TRUE}
+data$dif_precios <- (data$factura - data$costo_total)
+tarifario <- data %>% 
+  select(cod, vehiculo, factura) %>% 
+  group_by(vehiculo,cod) %>% 
+  summarise(costo_promedio = mean(factura)) %>% 
+  arrange(desc(costo_promedio), .by_group = TRUE)
+print(tarifario)
+```
+#Las tarifas son aceptables por el cliente
+```{r, cache = TRUE}
+contratos_mensuales <- data %>% 
+  mutate(month = month(Fecha, label = TRUE)) %>% 
+  select(month, ID) %>% 
+  group_by(month) %>% 
+  summarise(ventas = n()) %>% 
+  arrange(month)
+print(contratos_mensuales)
+```
+#Estamos en números rojos
+```{r,cache=TRUE}
+EBITDA <- sum(ingresos_totales - costos_totales) - sum(data["costo_fijo"])
+print(paste("Si la suma de las depreciaciones, intereses, amortizaciones y (dividendos/0.75) es mayor que: Q.", format(EBITDA, big.mark = ",", trim = TRUE),"entonces nos encontramos en números rojos."))
+```
+#cuando podemos perderle a una reparación o mantenimiento
+```{r, cache = TRUE}
+print(nrow(data[data$factura <= data$costo_total,]))
+```
+#deberiamos abrir más centros de distribución
+```{r, cache = TRUE}
+data %>% 
+  mutate(month = month(Fecha)) %>% 
+  select(origen, month) %>% 
+  group_by(origen, month) %>% 
+  summarise(pedidos = n())
+```
+#80-20 de factura
+```{r,cache = TRUE}
+datos_grafica <- data %>% 
+  select(cod, vehiculo, factura) %>% 
+  group_by(cod, vehiculo) %>% 
+  summarise(total = sum(factura))
+ventas_totales <- sum(datos_grafica$total)
+datos_grafica <- datos_grafica %>% mutate(porc = total/ventas_totales) %>% arrange(desc(porc)) %>% ungroup()
+datos_grafica$suma_acum <- ave(datos_grafica$porc,FUN=cumsum)
+datos_grafica$cat <- ifelse(datos_grafica$suma_acum <= 0.8,paste(datos_grafica$cod,datos_grafica$vehiculo),"Otros")
+datos_grafica <- datos_grafica %>% select(cat,total) %>%  group_by(cat) %>% summarise(valor = sum(total)) %>%  arrange(desc(valor)) %>% ungroup()
+ggplot(data = datos_grafica, aes(x = reorder(cat,-valor), y = valor)) + geom_bar(stat = "identity") + theme(axis.text.x = element_text(angle = 90)) + scale_x_discrete(name ="Categoria")
+```
+#Postes con mayor mantenimiento
+```{r, cache = TRUE}
+datos_grafica_2 <- data %>% select(ID) %>% group_by(ID) %>%  summarise(mantenimiento = n()) %>% arrange(desc(mantenimiento)) %>% head(10)
+datos_grafica_2$ID <- as.factor(datos_grafica_2$ID)
+ggplot(data = datos_grafica_2, aes(x = reorder(ID,-mantenimiento), y = mantenimiento)) + geom_bar(stat = "identity") + theme(axis.text.x = element_text(angle = 90)) + scale_x_discrete(name ="Cod. Poste")
+```
+#Recorridos más efectivos
+```{r, cache = TRUE}
+datos_grafica_3 <- data %>% select(vehiculo, cod, minutos, ganancia)
+datos_grafica_3$tiempo_prom <- ifelse(datos_grafica_3$minutos == "120+",120,
+                                      ifelse(datos_grafica_3$minutos == "75-120",97.5,
+                                             ifelse(datos_grafica_3$minutos == "45-75",60,
+                                                    ifelse(datos_grafica_3$minutos == "30-45",37.5,
+                                                           ifelse(datos_grafica_3$minutos == "5-30",17.5,1)))))
+datos_grafica_3$ganancia_por_minuto <- datos_grafica_3$ganancia/datos_grafica_3$tiempo_prom
+datos_grafica_3$cat <- paste(datos_grafica_3$vehiculo,datos_grafica_3$cod)
+datos_grafica_3 <- datos_grafica_3 %>% select(cat,ganancia_por_minuto) %>% group_by(cat) %>% summarise(prom_ganancias_por_min = mean(ganancia_por_minuto)) %>%  arrange(desc(prom_ganancias_por_min)) %>% head(5)
+ggplot(data = datos_grafica_3, aes(x = reorder(cat,-prom_ganancias_por_min), y = prom_ganancias_por_min)) + geom_bar(stat = "identity") + theme(axis.text.x = element_text(angle = 90)) + scale_x_discrete(name ="Categoria")
+```
+#Analisis
+#En terminos de estrategias a seguir, se recomienda no buscar expandir más la empresa, ya que existen dos centros de distribución que estan siendo menos efectivos (en rubro de viajes) a comparación de los otros dos. Se deberia tratar de incrementar el número de camiones y pickups, ya que estos parecen primordialmente ser los componentes que generan un mayor retorno, aunque las motos tienen un buen rendimiento en terminos de eficiencia. Los precios que se les estan ofreciendo a los clientes al parecer no ha tenido un impacto negativo durante este año, ya que el número de reparaciones se ha mantenido relativamente estable. Mientras que no se puede inferir si la empresa se encuentra en números rojos o no, se piensa que deberia ser una prioridad reducir los intereses y otros costos de financiamiento para mantener la mayor cantidad posible del EBITDA, que es un monto de Q. 8,514,077.
