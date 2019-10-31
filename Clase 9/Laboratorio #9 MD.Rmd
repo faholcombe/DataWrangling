@@ -1,0 +1,29 @@
+---
+title: 'Laboratorio #9 MD'
+author: "Fausto Holcombe 20170476"
+date: "10/27/2019"
+output: rmarkdown::github_document
+---
+## Importar librerias
+```{r setup, cache = TRUE}
+library(twitteR)
+library(dplyr)
+library(readr)
+```
+
+## Definir llaves y realizar el setup para obtener informacion del app
+```{r setup, cache = TRUE}
+consumer_key <- ""
+consumer_secret <- ""
+access_token <- ""
+access_secret <- ""
+setup_twitter_oauth(consumer_key, consumer_secret, access_token, access_secret)
+```
+
+## Obtener tweets, traspasarlo a DF y exportarlo a un .csv
+```{r setup, cache = TRUE}
+tw <- twitteR::searchTwitter('#TheRiseofSkywalker', n = 1e4, since = '2019-10-20', retryOnRateLimit = 1e3)
+df <- twitteR::twListToDF(tw)
+df %>% head() %>% View()
+write_csv(df,"tweetsRoS.csv")
+```
