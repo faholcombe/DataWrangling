@@ -1,0 +1,149 @@
+---
+title: 'Laboratorio #10'
+author: "Fausto Holcombe 20170476"
+date: "11/2/2019"
+output: html_document
+---
+##Importar librerias
+```{r setup, cache = TRUE}
+library(readr)
+library(dplyr)
+library(plotly)
+library(lubridate)
+library(DataExplorer)
+library(corrplot)
+```
+##Importar datos y limpieza basica
+```{r, cache = TRUE}
+movies <- read_csv('Lab10/movies.csv')
+ratings <- read_csv('Lab10/ratings.csv')
+ratings$timestamp <- as.character(as.POSIXlt(ratings$timestamp, origin = "1970-01-01", tz = "UTC"))
+```
+##Detalle de tipos de datos
+```{r, cache = TRUE}
+introduce(movies)
+introduce(ratings)
+head(movies)
+head(ratings)
+#Como se puede ver en los siguientes dataframes, una de las fuentes de datos (movies) contiene 13 variables y 13,687 observaciones. Las columnas de esta fuente son principalmente continuas, con 8 columnas representando este tipo de variable. Las columnas continuas en este set de datos son: budget, que representa el presupuesto de la pelicula, popularity, que representa la popularidad de la pelicula según los participantes en imdb, release_year, que representa el año que se estreno la pelicula, release_date, que da la fecha en la que se estreno la pelicula, revenue, que representa los ingresos que genero la pelicula, runtime, que representa la duración de la pelicula, vote_average, que muestra el promedio del puntaje que lleva la pelicula en imdb, y por último vote_count, que muestra el conteo de votos. A comparación, esta base de datos solo tiene 5 variables categoricas, estas siendo: id, que representa el identificador de la pelicula, imdb_id, que representa el identificador en imdb, original_language, que muestra el idioma en el que se grabo la pelicula, original_title, que muestra el titulo original de la pelicula, y el titulo, que muestra el titulo de la pelicula. Finalmente, el frame de movies tiene 13,548 casos completos, lo cual indica que hay 139 observaciones incompletas (indicados por NAs). Existe un roblema con esta fuente de datos, en el cual los datos faltantes en las columnas de budget, revenue y runtime son representados por ceros. En el caso de las primeras dos columnas, la cantidad de ceros sobrepasa el 80% de los datos, por lo cual hacer un tratamiento de missing values que involucre imputación es poco sensato. A diferencia de las dos columnas mencionadas anteriormente, la columna de runtime tiene ceros unicamente en 447 filas, lo cual representa el 3.26% del total de observaciones.
+#A diferencia del set de datos de movies, el set de datos ratings tiene 8,177,973 observaciones con 1 variable continua y 3 variables categoricas por observación. En este set, la variable continua en este caso es el timestamp, que refleja la fecha y la hora en el cual el usuario ingresa su punteo. A diferencia de la columna mencionada anteriormente, las 3 columnas categoricas son el rating, que puede tomar uno de 10 valores entre el 0 y el 10 con incrementos de 05, userid, que es el identificador unico por usuario, y el movieid, que representa el identificador unico por pelicula. A diferencia del set de datos de movies, ratings tiene 8,164,470 casos incompletos, lo cual implica una cantidad de observaciones faltanes de 13,503.
+```
+##Manipulación de tablas
+```{r, cache = TRUE}
+outliers_z <- function(df,col,z_val = 3,side = "Both",cap = "No"){
+  mean_z <- mean(df[[col]], na.rm = TRUE)
+  sd_z <- sd(df[[col]], na.rm = TRUE)
+  top_bracket <- mean_z + z_val * sd_z
+  bottom_bracket <- mean_z - z_val * sd_z
+  if(cap == "Yes"){
+    if(side == "Both"){
+      df[df[,col]>top_bracket,col] <- top_bracket
+      df[df[,col]<bottom_bracket,col] <- bottom_bracket
+      return(df)
+    } else if(side == "Top"){
+      df[df[,col]>top_bracket,col] <- top_bracket
+      return(df)
+    } else if(side == "Bottom"){
+      df[df[,col]<bottom_bracket,col] <- bottom_bracket
+      return(df)
+    }
+  } else if(cap == "No"){
+    if(side == "Both"){
+      df <- df[df[col]<top_bracket,]
+      df <- df[df[col]>bottom_bracket,]
+      return(df)
+    } else if(side == "Top"){
+      df <- df[df[,col]<top_bracket,]
+      return(df)
+    } else if(side == "Bottom"){
+      df <- df[df[,col]>bottom_bracket,]
+      return(df)
+    }
+  }
+}
+movies <- movies[complete.cases(movies),] %>% select(-c("budget","revenue")) %>% filter(runtime >0)
+movies <- outliers_z(movies,"popularity",z_val = 3, side = "Top", cap = "No")
+movies <- outliers_z(movies,"vote_average",z_val = 2, side = "Both", cap = "No")
+movies <- outliers_z(movies,"vote_count",z_val = 2, side = "Top", cap = "No")
+movies <- outliers_z(movies,"runtime",z_val = 3, side = "Both", cap = "No")
+movies$release_date <- as.Date(movies$release_date,format = "%m/%d/%y")
+movies$release_month <- month(movies$release_date)
+movies$release_day <- day(movies$release_date)
+movies$release_dow <- wday(movies$release_date)
+ratings <- ratings[complete.cases(ratings),]
+ratings$timestamp <- as_datetime(ratings$timestamp)
+ratings$rating_year <- year(ratings$timestamp)
+ratings$rating_month <- month(ratings$timestamp)
+ratings$rating_day <- day(ratings$timestamp)
+ratings$rating_dow <- wday(ratings$timestamp)
+ratings$rating_hour <- hour(ratings$timestamp)
+all_data <- left_join(ratings, movies, by = c("movieId" = "id")) %>% select(-c("X1.x","X1.y"))
+#Tomando en consideración la cantidad de ceros que existian en las columnas de budget y revenue, se considero mejor eliminar las columnas por completo del analisis, ya que existe poco valor que pudiera tomarse de un analisis mas profundo de las columnas. A diferencia de esto, se tomaron unicamente aquellas filas que tuvieran runtimes arriba de 0, ya que las filas que tenian un runtime de 0 unicamente representaban el aproximadamente el 3% de la data. Ademas de esto, se eliminaron todas las filas que tenian NAs, ya que representaban el 1% o menos en ambos sets de datos. Se hizo un tratamiento de outliers para las columnas de popularity, vote_average, runtime y vote_count. Se busco separar la columna de timestamp entre la hora, dia del mes, dia de la semana, mes y año para poder encontrar patrones.
+```
+##Analisis de las variables númericas
+```{r, cache = TRUE}
+plot_density(select(ratings, -c("X1","userId","movieId")))
+#Como se puede ver en las graficas a continuación, el analissi de las variables númericas de la data de ratings nos provee insights muy interesantes. En primer lugar, se postea mas al principio de la semana, teniendo un pico el martes y este numero se reduce a traves de la semana hasta el viernes, que es el punto mínimo. En relación a las horas del día en que se postea, podemos ver que desde la media noche hasta las 10 de la mañana existe una reduccion en los posts. Despues de esta reducción, el número de posts por hora del día incrementa hasta llegar a la hora pico, que se da cerca de las 8 de la noche. Podemos ver tambien que los ratings se mantienen principalmente cerca del rango superior de la escala, con el rating de 4 siendo la moda de la escala. Por último, las variables de día del mes y mes se comportan relativamente unifrme, mientras que la variable de año parece no tener patron alguno.
+plot_density(select(movies, -c("X1","id")))
+# Como se evidencia en las graficas a continuación, existen una variedad de patrones que podemos detectar en las variables númericas del set de datos de movies. Como primer tendencia, podemos ver que la mayoria de las peliculas que se tienen en el set de datos tienen un nivel de popularidad menor al 5 y que esta grafica sigue una tendencia de decrecimiento exponencial. Parece tambien que el número de peliculas que se lanzan cada año crece de manera exponencial a traves del tiempo. La duración de las peliculas generalmente sigue una tendencia normal, mientras que el promedio de reseñas para una pelicula sigue una tendencia que tambien parece normal pero tiene un poco de sesgo hacia la izquierda. Podemos ver tambien que una cantidad de peliculas significativa estrena al principio del mes, y que el numero de peliculas ue estrenan cada dia crece exponencialmente a través de la semana, llegando a un pico el sabado. Detectamos tambien que al principio del año se estrenan muchas peliculas, pero este numero cae hasta julio, en donde se recupera y llega a un pico en septiembre. Por último, podemos ver que el número de reseñas que tiene cada pelicula se mantiene regularmente abajo del 100, y que esta variable tambien sigue una tendencia de decaimiento exponencial.
+```
+##Analisis de las variables categoricas
+```{r, cache = TRUE}
+barplot_categorical <- function(cat_table, xlab){
+  vector <- as.vector(cat_table[[2]])
+  names(vector) <- as.vector(cat_table[[1]])
+  barplot(vector, beside = TRUE, xlab = xlab, ylab = "Frequency")
+}
+languages_table <- as.data.frame(table(movies$original_language)) %>% 
+  mutate(is_en = ifelse(Var1 == "en","en","other")) %>%
+  group_by(is_en) %>% 
+  summarise(language_freq = sum(Freq))
+original_titles_table <- as.data.frame(table(movies$original_title)) %>% 
+  filter(Freq >1) %>% 
+  group_by(Freq) %>% 
+  summarise(original_title_freq = n())
+titles_table <- as.data.frame(table(movies$title)) %>% 
+  filter(Freq >1) %>% 
+  group_by(Freq) %>% 
+  summarise(title_freq = n())
+user_id_table <- as.data.frame(table(ratings$userId)) %>% 
+  group_by(Freq) %>% 
+  summarise(user_freq = n()) %>% 
+  mutate(postings = ifelse(Freq<=5,"1-5 posts",ifelse(Freq<=20 & Freq >5,"5-20 posts",">20 posts"))) %>% 
+  group_by(postings) %>% 
+  summarise(language_freq = sum(user_freq))
+user_id_table <- user_id_table[c(2,3,1),]
+barplot_categorical(languages_table,xlab = "Languages")
+barplot_categorical(original_titles_table,xlab = "Repeated original titles")
+barplot_categorical(titles_table,xlab = "Repeated titles")
+barplot_categorical(user_id_table,xlab = "Posts")
+#Al analizar el set de datos de movies, podemos encontrar varios insights, como por ejemplo: la mayoría de peliculas son originalmente en inglés. Como se ve en las graficas a continuación, el conteo de las peliculas en otros idiomas es menos de la mitad del conteo de las peliculas en ingles. Ademas de esto, existen alrededor de 140 titulos originales que se utilizaron en 2 producciones, mientras que menos de 10 titulos originales se utilizaron en 3 producciones. Aparte de los titulos originales, más de 200 titulos iguales se utilizaron en 2 producciones, seguido por alrededor de 25 titulos iguales que se utilizaron en 3 producciones, y por último menos de 25 titulos iguales en 4 producciones. Finalmente, en el set de datos de ratings, encontramos que los usuarios se pueden clasificar en 3 categorias que tienen pobalciones similares: aquellos que pulican de 1 a 5 veces, aquellos que publican de 5 a 20 veces y por último aquellos que publican mas de 20 veces.
+```
+##Correlación entre todas variables
+```{r, cache = TRUE}
+corr_data <- all_data[complete.cases(all_data),] %>% mutate(is_en = ifelse("original_language" == "en","en","other")) %>%
+                   select(-c("userId","movieId","timestamp","imdb_id","original_title","release_date","title","original_language"))
+plot_correlation(corr_data)
+# Como se puede ver en la grafica de abajo, existen varias correlaciones leves y medianas entre nuestras columnas de datos. Dado que el rating del individuo se toma en consideración en el promedio de votos, no deberia sorprendernos o impactarnos esta correlación, al igual que la correlación entre popularity y vote_count, ya que seguramente el numero de votos que se le atribuye a una pelicula es una metrica para reflejar su popularidad. Un insight interesante es que la correlación entre runtime y vote_count al igual que la correlación entre runtime y vote_average son positivas, aunque leves (0.24 y 0.26), lo cual puede indicar que peliculas con runtimes mas largos tienen una tendencia a obtener mas votos con mejores punteos. Otro insight interesante es que la correlación entre año de estreno y vote_average es negativa, que muestra una tendencia hacia la baja en los punteos promedios entre más avanza el tiempo. Un último dato de interes puede ser la correlación positiva entre release_year y release_dow, reflejando que a traves de los años se ha ido trasladando el día de estreno mas hacia el fin de la semana a comparación del inicio de la misma.
+```
+##Correlación entre variables particulares (CUIDADO: LA FUNCION GRAFICADORA DEL LM Y EL SCATTER CAUSA QUE EN LA MAYORIA DE CASOS RSTUDIO PARE DE RESPONDER, POR ESO ESTAN COMO COMENTARIOS)
+```{r, cache = TRUE}
+create_correlation_graph <- function(df,indp,dpnt){
+  indvar <- sym(indp)
+  depvar <- sym(dpnt)
+  new_df <- df %>% select(dependent = !!depvar,independent = !!indvar)
+  lm1 <- lm(formula = dependent ~ independent, data = new_df)
+  plot_ly(new_df, x= ~dependent, y= ~independent, type ="scatter", mode= "markers") %>% add_trace(x= ~dependent, y=fitted.values(lm1), mode = "lines")
+}
+#create_correlation_graph(corr_data,"release_year","rating")
+cor(corr_data$rating,corr_data$release_year)
+#create_correlation_graph(corr_data,"runtime","rating")
+cor(corr_data$rating,corr_data$runtime)
+#create_correlation_graph(corr_data,"release_dow","vote_average")
+cor(corr_data$release_dow,corr_data$vote_average)
+#Para las tres parejas de variables vistas en las líneas anteriores pudimos obtener un insight interesante. Como se menciono en el cuadro de correlación anterior, existe una correlación negativa entre rating y release_year, lo que se puede dar por una variedad de stucaiones: talvez las personas ya son mas criticas de las peliculas que se les presenta, talvez antes se trabajaba masa en la calidad de la pelicula. Otro insight interesante es la correlacion de runtime con rating, ya que esta es positiva, y puede reflejar que en realidad las personas les gustan peliculas más largas. Este resultado tambien puede ser dado por nuestro preprocesamiento, que elimino aquellas peliculas que tenian runtimes extremadamente largos (>3 desviaciones estandares de la media). Por último, la correlacion negativa entre release_dow y vote_average nos muestra que aquellas peliculas que se estrenan mas tarde en la semana tienden a tener ratings mas bajos, lo cual parece interesante porque, como se vio anteriormente, a traves de los años, el estreno de las peliculas se ha ido desplazando mas y mas para el fin de semana.
+```
+##Conclusiones
+```{r}
+#En conclusión, este analisis EDA ha sido muy exitoso, ya que se pudieron obtener insights sobre como los críticos en Imdb se comportan, al igual se pudieron descubrir tendencias en el area cinematografica mundial. Se pudo encontrar que el conteo de votos mueve el indice de popularidad, al igual que las peliculas largas tienden a complacer a las personas mas que las peliculas cortas. Tambien encontramos que la mayoría de los posts se llevan a cabo a las 8 de la noche, mientras que pocos se llevan a cabo a las 10 de la mañana. Ademas de esto, muchos posts tienen un puntaje cerca de 4 y que se centran alrededor de esta cifra, siendo raro encontrar punteos cerca de 0. Por último se descubrio la tendencia de que los estrenos se han estado transfiriendo a los fines de semana a traves de los años, aunque esto no sea muy beneficioso en terminos del promedio de puntajes en Imdb.
+```
